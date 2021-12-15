@@ -5,22 +5,28 @@ cmake_minimum_required( VERSION 3.10)
 project(pointSignatureAlgortihm)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/lib)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # collect all the .cxx needed for executable 
-filE(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/libs/pointCloudFilters/src/*" )
+filE(GLOB LIBSOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" )
 
-filE(GLOB EXAMPLESRC ${CMAKE_CURRENT_SOURCE_DIR}/example/*.cpp)
+add_subdirectory(thirdparty/pointCloudFilters)
+add_subdirectory(examples)
 
-# Executable target name and srouce
-add_executable (${PROJECT_NAME} ${SOURCES} ${EXAMPLESRC})
+add_library( ${PROJECT_NAME}_shared SHARED ${LIBSOURCES} )
+target_link_libraries( ${PROJECT_NAME}_shared PUBLIC
+pointCloudFilters_shared)
+#${CMAKE_CURRENT_SOURCE_DIR}/build/thirdparty/pointCloudFilters/lib/libpointCloudFilters_shared.so )
 
-# Link dependencies
-# target_link_libraries (${PROJECT_NAME} )
-target_include_directories(${PROJECT_NAME} PUBLIC
-${CMAKE_CURRENT_SOURCE_DIR}/libs/pointCloudFilters/include
-${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories( ${PROJECT_NAME}_shared PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pointCloudFilters/include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+
+add_library(${PROJECT_NAME}_static STATIC ${LIBSOURCES})

@@ -3,15 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include <pcl/features/normal_3d.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/register_point_struct.h>
-#include <pcl/sample_consensus/model_types.h>
+#include <pointCloudFilters/pointCloudFilters.hpp>
 #include <string>
 #include <time.h>
 #include <vector>
