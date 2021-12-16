@@ -1,4 +1,4 @@
-#include <pointSignatureAlgorithm/optimizedPS.hpp>
+#include <pointSignatureAlgorithm/OptimizedPS.hpp>
 
 pointSignature::pointSignature() {
   cloud =
@@ -259,15 +259,15 @@ void pointSignature::computeSignature() {
     }
 
     //	for finding the cos angle between each Vni vector with respect to
-    //reference vector
+    // reference vector
     for (size_t i = 0; i < avgSearchRingCloudSize; i++) {
       cosThetaNi[i] = ((vnix[i] * vnix[maxindex]) + (vniy[i] * vniy[maxindex]) +
                        (vniz[i] * vniz[maxindex])) /
                       ((vniLength[i]) * (vniLength[maxindex]));
 
       //	due to rounding error the value of cosThetaNi might go higer
-      //than 1 or lower than -1 so we need this inequality for getting correct
-      //value of angle
+      // than 1 or lower than -1 so we need this inequality for getting correct
+      // value of angle
       if ((((cosThetaNi[i] - 1 <= 0.00001) && (cosThetaNi[i] - 1 >= 0.0)) ||
            ((cosThetaNi[i] + 1 <= 0.00001) && (cosThetaNi[i] + 1 >= 0.0)))) {
         acosThetaNi[i] = 0;
@@ -289,8 +289,8 @@ void pointSignature::computeSignature() {
           ((finalPlaneY[maxindex] - center.y) * (finalPlaneX[i] - center.x));
     }
 
-    //		assigning correct value for final Theta (extending the anlge form
-    //0-180 to 0-360)
+    //		assigning correct value for final Theta (extending the anlge
+    //form 0-180 to 0-360)
     for (size_t i = 0; i < avgSearchRingCloudSize; i++) {
       if (value[i] < 0) {
         acosThetaNi[i] = 360 - acosThetaNi[i];
@@ -367,7 +367,7 @@ void pointSignature::SigCompare() {
   mean = sum / 25;
 
   //=======================start of checking if clicked point is plane or
-  //not=======================================
+  // not=======================================
 
   if ((mean > -0.2) && (mean < 0.4)) {
     float planeTXData[4] = {0, 360, 360, 0};

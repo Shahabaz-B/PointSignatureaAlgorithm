@@ -8,10 +8,9 @@ Upsampling and smoothing, Downsampling and smoothing.
 #include <iostream>
 #include <pointCloudFilters/KdtreeFlann.hpp>
 #include <pointCloudFilters/PointCloudFilters.hpp>
-#include <pointCloudFilters/point.hpp>
+#include <pointCloudFilters/PointDefinition.hpp>
 #include <string>
 
-typedef pointCloud pcl::PointCloud;
 class cleanCloud {
 private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, voxelCloud, mlsCloud, cleanSample,

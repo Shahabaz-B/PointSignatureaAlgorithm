@@ -21,12 +21,17 @@ add_subdirectory(examples)
 add_library( ${PROJECT_NAME}_shared SHARED ${LIBSOURCES} )
 target_link_libraries( ${PROJECT_NAME}_shared PUBLIC
 pointCloudFilters_shared)
-#${CMAKE_CURRENT_SOURCE_DIR}/build/thirdparty/pointCloudFilters/lib/libpointCloudFilters_shared.so )
 
 target_include_directories( ${PROJECT_NAME}_shared PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pointCloudFilters/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 
-
 add_library(${PROJECT_NAME}_static STATIC ${LIBSOURCES})
+target_link_libraries( ${PROJECT_NAME}_static PUBLIC
+pointCloudFilters_static)
+
+target_include_directories( ${PROJECT_NAME}_static PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pointCloudFilters/include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/
+)

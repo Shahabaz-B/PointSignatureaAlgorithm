@@ -12,5 +12,7 @@ add_executable(
 )
 
 # Link dependencies
-target_link_libraries (${PROJECT_NAME} PRIVATE
-pointSignatureAlgorithm_shared)
+target_link_libraries (${PROJECT_NAME} PUBLIC
+	pointCloudFilters_shared
+	pointSignatureAlgorithm_shared
+)

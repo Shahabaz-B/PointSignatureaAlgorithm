@@ -1,4 +1,4 @@
-#include <pointSignatureAlgorithm/cleanCloud.hpp>
+#include <pointSignatureAlgorithm/CleanCloud.hpp>
 
 inline double round(double value) {
   return value < 0 ? -std::floor(0.5 - value) : std::floor(0.5 + value);

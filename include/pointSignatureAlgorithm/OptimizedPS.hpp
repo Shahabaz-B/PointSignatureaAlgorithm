@@ -3,7 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include <pointCloudFilters/pointCloudFilters.hpp>
+#include <pointCloudFilters/PointCloudFilters.hpp>
 #include <string>
 #include <time.h>
 #include <vector>

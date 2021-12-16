@@ -1,7 +1,6 @@
 #include <pointCloudFilters/KdtreeFlann.hpp>
-#include <pointSignatureAlgirithm/meanDistance.hpp>
-#include <pointSignatureAlgorithm/cleanCloud.hpp>
-#include <pointSignatureAlgorithm/optimizedPS.hpp>
+#include <pointSignatureAlgorithm/CleanCloud.hpp>
+#include <pointSignatureAlgorithm/OptimizedPS.hpp>
 
 inline double round(double value) {
   return value < 0 ? -std::floor(0.5 - value) : std::floor(0.5 + value);
