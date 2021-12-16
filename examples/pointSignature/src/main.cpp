@@ -1,5 +1,6 @@
+#include "pointCloudFilters/PointCloudFilters.hpp"
+#include <pointCloudFilters/FileHandler.hpp>
 #include <pointCloudFilters/KdtreeFlann.hpp>
-#include <pointSignatureAlgorithm/CleanCloud.hpp>
 #include <pointSignatureAlgorithm/OptimizedPS.hpp>
 
 inline double round( double value )
@@ -8,22 +9,18 @@ inline double round( double value )
 }
 int main( int argc, char** argv )
 {
-  PCF::pointCloud cloud( new PCF::pointCloud );
-  PCF::pointCloud extractedCloud( new PCF::pointCloud );
-  pcl::visualization::PCLVisualizer* visualizer(
-    new pcl::visualization::PCLVisualizer );
+  PCF::FileHandler fh;
+  PCF::pointCloud cloud = fh.loadXYZfile( argv[ 1 ] );
+  PCF::pointCloud extractedCloud;
+  PCF::pointCloud smoothCloud;
 
   // std::string file;
   // printf("Give the input cloud\n");
   // std::cin >> file;
 
-  pcl::io::loadPCDFile< pcl::PointXYZ >( argv[ 1 ], *cloud );
-
-  cleanCloud cc;
-  cloud = cc.removeNoise( cloud );
-
-  meanDistance md1;
-  md1.calcMean( cloud, 2 );
+  PCF::Filter3D cc;
+  cc.MakeSmoothPointCloud( 30, 0.8 * cc.getMean( 4, cloud ), cloud,
+                           smoothCloud );
 
   pcl::SampleConsensusModelPlane< pcl::PointXYZ > model_p(
     new pcl::SampleConsensusModelPlane< pcl::PointXYZ >( cloud ) );
