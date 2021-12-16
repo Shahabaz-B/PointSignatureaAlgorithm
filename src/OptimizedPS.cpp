@@ -1,71 +1,50 @@
+#include "pointCloudFilters/KdtreeFlann.hpp"
+#include "pointCloudFilters/PointCloudFilters.hpp"
+#include "pointCloudFilters/PointDefinition.hpp"
+#include <cstddef>
 #include <pointSignatureAlgorithm/OptimizedPS.hpp>
 
 namespace PSA {
-  pointSignature::pointSignature()
+
+  pointSignature::pointSignature( PCF::pointCloud const& inputCloud )
+    : inputCloud_( inputCloud )
   {
-    cloud                  = PCF::pointCloud( new PCF::pointCloud );
-    avgSearchRingCloudSize = 0;
-    loopingCloud           = PCF::pointCloud( new PCF::pointCloud );
-    planeCloud             = PCF::pointCloud( new PCF::pointCloud );
-    filteredPlaneCloud     = PCF::pointCloud( new PCF::pointCloud );
-    filterCloud            = PCF::pointCloud( new PCF::pointCloud );
-    outputCloud            = PCF::pointCloud( new PCF::pointCloud );
-    SearchRingCloud        = PCF::pointCloud( new PCF::pointCloud );
-    Normalcloud =
-      pcl::PointCloud< pcl::Normal >( new pcl::PointCloud< pcl::Normal > );
-    normArray.resize( 25 );
-    descreteArray.resize( 25 );
-    counter = 0;
+    avgSearchRingCloudSize_ = 0;
+    normArray_.resize( 25 );
+    descreteArray_.resize( 25 );
+    counter_ = 0;
   }
 
-  void pointSignature::setCloud( PCF::pointCloud input ) { cloud = input; }
+  void pointSignature::setRadius( float const& radius ) { radius_ = radius; }
 
-  void pointSignature::setRadius( float _radius ) { radius = _radius; }
+  void pointSignature::setMargin( float const& margin ) { margin_ = margin; }
 
-  void pointSignature::setCenter( int _center ) { center_point = _center; }
-
-  // void pointSignature::setCenter(pcl::PointXYZ _center)
-  //{
-  //	center_pnt = _center;
-  // }
-
-  void pointSignature::setMargin( float _margin ) { margin = _margin; }
-
-  PCF::pointCloud pointSignature::getCloud() { return cloud; }
-
-  float pointSignature::getRadius() { return radius; }
-
-  int pointSignature::getCenter() { return center_point; }
-
-  float pointSignature::getMargin() { return margin; }
-
-  void pointSignature::calculateSearchRing()
+  void pointSignature::calculateSearchRing( uint const& centerId )
   {
     int count = 0;
     std::vector< int > ptIndex;
     ptIndex.resize( 1000 );
     std::vector< int > pointIdxRadSearch;
     std::vector< float > pointRadSqDistance;
-    pcl::KdTreeFLANN< pcl::PointXYZ > kdtree;
-    pcl::PointXYZ center;
-    center.x = cloud->points[ center_point ].x; // center_pnt.x;
-    center.y = cloud->points[ center_point ].y; // center_pnt.y;
-    center.z = cloud->points[ center_point ].z; // center_pnt.z;
+    PCF::KDtreeFlann kdtree;
+    centerPnt_.x = inputCloud_[ centerId ].x; // center_pnt.x;
+    centerPnt_.y = inputCloud_[ centerId ].y; // center_pnt.y;
+    centerPnt_.z = inputCloud_[ centerId ].z; // center_pnt.z;
 
-    for( size_t i = 0; i < cloud->points.size(); i++ ) {
+    for( size_t i = 0; i < inputCloud_.size(); i++ ) {
       double temp = 0.0, squareRoot = 0.0;
       // standard eqauation of sphere
-      temp = ( ( ( cloud->points[ i ].x - center.x ) *
-                 ( cloud->points[ i ].x - center.x ) ) +
-               ( ( cloud->points[ i ].y - center.y ) *
-                 ( cloud->points[ i ].y - center.y ) ) +
-               ( ( cloud->points[ i ].z - center.z ) *
-                 ( cloud->points[ i ].z - center.z ) ) );
+      temp = ( ( ( inputCloud_[ i ].x - centerPnt_.x ) *
+                 ( inputCloud_[ i ].x - centerPnt_.x ) ) +
+               ( ( inputCloud_[ i ].y - centerPnt_.y ) *
+                 ( inputCloud_[ i ].y - centerPnt_.y ) ) +
+               ( ( inputCloud_[ i ].z - centerPnt_.z ) *
+                 ( inputCloud_[ i ].z - centerPnt_.z ) ) );
 
       // ADDED sqrt function
       squareRoot = sqrt( temp );
 
-      if( squareRoot - radius <= margin && squareRoot - radius >= 0.0 ) {
+      if( squareRoot - radius_ <= margin_ && squareRoot - radius_ >= 0.0 ) {
         ptIndex[ count ] = i;
         count++;
         /*to count the number of point which satisfy the condition,
@@ -76,184 +55,173 @@ namespace PSA {
     // writing all the data into a PCD file
     ptIndex.resize( count );
     ptIndex.shrink_to_fit();
-    SearchRingCloud->width  = count;
-    SearchRingCloud->height = 1;
-    SearchRingCloud->points.resize( SearchRingCloud->width );
+    SearchRingCloud_.resize( count );
 
-    for( size_t i = 0; i < SearchRingCloud->points.size(); i++ ) {
+    for( size_t i = 0; i < SearchRingCloud_.size(); i++ ) {
       // adding values for new points from the old point cloud which satisfy the
       // condition
-      SearchRingCloud->points[ i ].x = cloud->points[ ptIndex[ i ] ].x;
-      SearchRingCloud->points[ i ].y = cloud->points[ ptIndex[ i ] ].y;
-      SearchRingCloud->points[ i ].z = cloud->points[ ptIndex[ i ] ].z;
+      SearchRingCloud_[ i ].x = inputCloud_[ ptIndex[ i ] ].x;
+      SearchRingCloud_[ i ].y = inputCloud_[ ptIndex[ i ] ].y;
+      SearchRingCloud_[ i ].z = inputCloud_[ ptIndex[ i ] ].z;
     }
 
-    totalcount = SearchRingCloud->points.size();
+    totalcount_ = SearchRingCloud_.size();
 
-    if( totalcount > 0 ) {
-      kdtree.setInputCloud( SearchRingCloud );
+    if( totalcount_ > 0 ) {
+      kdtree.setInputCloud( SearchRingCloud_ );
 
-      std::vector< float > avgX( totalcount ), avgY( totalcount ),
-        avgZ( totalcount );
+      std::vector< float > avgX( totalcount_ ), avgY( totalcount_ ),
+        avgZ( totalcount_ );
 
-      // 0.2617993878 = (15*2*PI)/360), standard forumula for arc length
       // calculation
-      float volume_sphere_radius = ( 0.2617993878 * ( radius ) );
-      for( size_t i = 0; i < totalcount; i++ ) {
-        if( kdtree.radiusSearch( SearchRingCloud->points[ i ],
-                                 volume_sphere_radius, pointIdxRadiusSearch,
-                                 pointRadiusSquaredDistance ) > 0 ) {
-          for( size_t j = 0; j < pointIdxRadiusSearch.size(); j++ ) {
+      float volume_sphere_radius = ( ARC_LENGTH_CONST * ( radius_ ) );
+      for( size_t i = 0; i < totalcount_; i++ ) {
+        if( kdtree.radiusSearch( SearchRingCloud_[ i ], volume_sphere_radius,
+                                 pointIdxRadiusSearch_,
+                                 pointRadiusSquaredDistance_ ) > 0 ) {
+          for( size_t j = 0; j < pointIdxRadiusSearch_.size(); j++ ) {
             // accumulating the co-ordinates of the points which comes in the
             // volume sphere
-            avgX[ i ] = avgX[ i ] +
-                        SearchRingCloud->points[ pointIdxRadiusSearch[ j ] ].x;
-            avgY[ i ] = avgY[ i ] +
-                        SearchRingCloud->points[ pointIdxRadiusSearch[ j ] ].y;
-            avgZ[ i ] = avgZ[ i ] +
-                        SearchRingCloud->points[ pointIdxRadiusSearch[ j ] ].z;
+            avgX[ i ] =
+              avgX[ i ] + SearchRingCloud_[ pointIdxRadiusSearch_[ j ] ].x;
+            avgY[ i ] =
+              avgY[ i ] + SearchRingCloud_[ pointIdxRadiusSearch_[ j ] ].y;
+            avgZ[ i ] =
+              avgZ[ i ] + SearchRingCloud_[ pointIdxRadiusSearch_[ j ] ].z;
           }
           // taking the average of the points to make new point cloud
-          avgX[ i ] = avgX[ i ] / pointIdxRadiusSearch.size();
-          avgY[ i ] = avgY[ i ] / pointIdxRadiusSearch.size();
-          avgZ[ i ] = avgZ[ i ] / pointIdxRadiusSearch.size();
+          avgX[ i ] = avgX[ i ] / pointIdxRadiusSearch_.size();
+          avgY[ i ] = avgY[ i ] / pointIdxRadiusSearch_.size();
+          avgZ[ i ] = avgZ[ i ] / pointIdxRadiusSearch_.size();
         }
       }
 
       // saving the avgRing in to new PCD file
-      for( size_t i = 0; i < totalcount; i++ ) {
-        SearchRingCloud->points[ i ].x = avgX[ i ];
-        SearchRingCloud->points[ i ].y = avgY[ i ];
-        SearchRingCloud->points[ i ].z = avgZ[ i ];
+      for( size_t i = 0; i < totalcount_; i++ ) {
+        SearchRingCloud_[ i ].x = avgX[ i ];
+        SearchRingCloud_[ i ].y = avgY[ i ];
+        SearchRingCloud_[ i ].z = avgZ[ i ];
       }
-      avgSearchRingCloudSize = SearchRingCloud->points.size();
+      avgSearchRingCloudSize_ = SearchRingCloud_.size();
     }
   }
 
-  PCF::pointCloud pointSignature::getSearchRing() { return SearchRingCloud; }
-
-  void pointSignature::calculateNormals()
-  {
-    pcl::NormalEstimation< pcl::PointXYZ, pcl::Normal > ne;
-    ne.setInputCloud( cloud );
-
-    pcl::search::KdTree< pcl::PointXYZ > tree(
-      new pcl::search::KdTree< pcl::PointXYZ >() );
-    // To save the Normals of point cloud
-
-    ne.setSearchMethod( tree );
-    ne.setKSearch( 30 );
-
-    // computes cloud normal
-    ne.compute( *Normalcloud );
-  }
-
-  bool sort_by_angle( const temp& a, const temp& b )
+  bool sort_by_angle( const angleAndScaling& a, const angleAndScaling& b )
   {
     return a.theta < b.theta;
   }
 
-  void pointSignature::computeSignature()
+  void pointSignature::computeNormals()
   {
-    if( avgSearchRingCloudSize > 0 ) {
 
-      vcix.resize( avgSearchRingCloudSize ); // X co-ordiante of vector center
-                                             // and Intersecting point
-      vciy.resize( avgSearchRingCloudSize ); // Y co-ordiante of vector center
-                                             // and Intersecting point
-      vciz.resize( avgSearchRingCloudSize ); // Z co-ordiante of vector center
-                                             // and Intersecting point
-      vciLength.resize(
-        avgSearchRingCloudSize ); // length of the intersecting vector
-      vciDotProd.resize(
-        avgSearchRingCloudSize ); // Dot product between Normal vector of center
-                                  // point and intersecting vector
-      vciLengthProd.resize(
-        avgSearchRingCloudSize ); // length product between Normal vector of
-                                  // center point and intersecting vector
-      cosTheta.resize(
-        avgSearchRingCloudSize ); // cosTheta between Normal vector of center
-                                  // point and intersecting vector
-      sFactor.resize(
-        avgSearchRingCloudSize ); // scaling factor of the intersecting vector
-                                  // on the given Normal vector
-      pNx.resize( avgSearchRingCloudSize ); // X co-ordinate of the point which
-                                            // is scaled on noraml vector
-      pNy.resize( avgSearchRingCloudSize ); // Y co-ordinate of the point which
-                                            // is scaled on noraml vector
-      pNz.resize( avgSearchRingCloudSize ); // Z co-ordinate of the point which
-                                            // is scaled on noraml vector
-      vnix.resize(
-        avgSearchRingCloudSize ); // X co-ordinate of the scaled noraml vector
-      vniy.resize(
-        avgSearchRingCloudSize ); // Y co-ordinate of the scaled noraml vector
-      vniz.resize(
-        avgSearchRingCloudSize ); // Z co-ordinate of the scaled noraml vector
-      vniLength.resize(
-        avgSearchRingCloudSize ); // Length of the vector between scaled point
-                                  // and the intersecting point
-      cosThetaNi.resize(
-        avgSearchRingCloudSize ); // cosTheta value for final plotting
-      acosThetaNi.resize(
-        avgSearchRingCloudSize ); // Angle for final plotting of profile, angle
-                                  // between each Vni vector w.r.t to reference
-                                  // Vni vector
-      finalPlaneX.resize(
-        avgSearchRingCloudSize ); // for extinding the angle value form 180 to
-                                  // 360 we need determinant of a value...
-      finalPlaneY.resize(
-        avgSearchRingCloudSize ); // which requires X and Y co-ordinate of the
-                                  // plane vector, which will be stored in
-                                  // these..
-      value.resize( avgSearchRingCloudSize ); // variables.
-      structArray.resize( avgSearchRingCloudSize );
+    PCF::Filter3D filter3d;
+    filter3d.findNormals( inputCloud_, 30, normalCloud_ );
+  }
 
-      pcl::PointXYZ center = cloud->points[ center_point ];
-      for( size_t i = 0; i < avgSearchRingCloudSize;
-           i++ ) // loop for Vci Calculation
-      {
-        vcix[ i ] = SearchRingCloud->points[ i ].x - center.x;
-        vciy[ i ] = SearchRingCloud->points[ i ].y - center.y;
-        vciz[ i ] = SearchRingCloud->points[ i ].z - center.z;
+  void pointSignature::computeSignature( uint const& centerId )
+  {
+
+    // Refer Thesis documetation to understand meaning of these varaibles
+    PCF::pointCloud vci, pN, vni;
+    std::vector< double > vciLength, vciDotProd, vciLengthProd, cosTheta,
+      sFactor, vniLength, cosThetaNi, acosThetaNi, value, finalPlaneX,
+      finalPlaneY;
+
+    if( avgSearchRingCloudSize_ > 0 ) {
+      // co-ordinate of vector center and Intersecting point
+      vci.resize( avgSearchRingCloudSize_ );
+
+      // length of the intersecting vector
+      vciLength.resize( avgSearchRingCloudSize_ );
+
+      // Dot product between Normal vector of center point and intersecting
+      // vector
+      vciDotProd.resize( avgSearchRingCloudSize_ );
+
+      // length product between Normal vector of center point and intersecting
+      // vector
+      vciLengthProd.resize( avgSearchRingCloudSize_ );
+
+      // cosTheta between Normal vector of center point and intersecting vector
+      cosTheta.resize( avgSearchRingCloudSize_ );
+
+      // scaling factor of the intersecting vector on the given Normal vector
+      sFactor.resize( avgSearchRingCloudSize_ );
+
+      // co-ordinate of the point which is scaled on noraml vector
+      pN.resize( avgSearchRingCloudSize_ );
+
+      // co-ordinate of the scaled normal vector
+      vni.resize( avgSearchRingCloudSize_ );
+
+      // Length of the vector between scaled point and the intersecting point
+      vniLength.resize( avgSearchRingCloudSize_ );
+
+      // cosTheta value for final plotting
+      cosThetaNi.resize( avgSearchRingCloudSize_ );
+
+      // Angle for final plotting of profile, angle
+      // between each Vni vector w.r.t to reference
+      // Vni vector
+      acosThetaNi.resize( avgSearchRingCloudSize_ );
+
+      // for extinding the angle value form 180 to
+      // 360 we need determinant of a value...
+      finalPlaneX.resize( avgSearchRingCloudSize_ );
+
+      // which requires X and Y co-ordinate of the
+      // plane vector, which will be stored in
+      // these..
+      finalPlaneY.resize( avgSearchRingCloudSize_ );
+
+      // variables.
+      value.resize( avgSearchRingCloudSize_ );
+
+      structArray_.resize( avgSearchRingCloudSize_ );
+
+      auto& center = inputCloud_[ centerId ];
+      // loop for Vci Calculation
+      for( size_t i = 0; i < avgSearchRingCloudSize_; i++ ) {
+        vci[ i ].x = SearchRingCloud_[ i ].x - center.x;
+        vci[ i ].y = SearchRingCloud_[ i ].y - center.y;
+        vci[ i ].z = SearchRingCloud_[ i ].z - center.z;
         vciLength[ i ] =
-          sqrt( ( vcix[ i ] * vcix[ i ] ) + ( vciy[ i ] * vciy[ i ] ) +
-                ( vciz[ i ] * vciz[ i ] ) );
+          sqrt( ( vci[ i ].x * vci[ i ].x ) + ( vci[ i ].y * vci[ i ].y ) +
+                ( vci[ i ].z * vci[ i ].z ) );
       }
 
-      pcl::Normal normalOfCenter = Normalcloud->points[ center_point ];
+      auto& normalOfCenter = normalCloud_[ centerId ];
 
       // Loop for vector calculation
-      for( size_t i = 0; i < avgSearchRingCloudSize; i++ ) {
-        vciDotProd[ i ] = ( normalOfCenter.normal_x * vcix[ i ] ) +
-                          ( normalOfCenter.normal_y * vciy[ i ] ) +
-                          ( normalOfCenter.normal_z * vciz[ i ] );
+      for( size_t i = 0; i < avgSearchRingCloudSize_; i++ ) {
+        vciDotProd[ i ] = ( normalOfCenter.nx * vci[ i ].x ) +
+                          ( normalOfCenter.ny * vci[ i ].y ) +
+                          ( normalOfCenter.nz * vci[ i ].z );
 
-        vciLengthProd[ i ] = ( sqrt( pow( normalOfCenter.normal_x, 2 ) +
-                                     pow( normalOfCenter.normal_y, 2 ) +
-                                     pow( normalOfCenter.normal_z, 2 ) ) ) *
-                             vciLength[ i ];
+        vciLengthProd[ i ] =
+          ( sqrt( pow( normalOfCenter.nx, 2 ) + pow( normalOfCenter.ny, 2 ) +
+                  pow( normalOfCenter.nz, 2 ) ) ) *
+          vciLength[ i ];
         cosTheta[ i ] = vciDotProd[ i ] / vciLengthProd[ i ];
 
         sFactor[ i ] = cosTheta[ i ] * vciLength[ i ];
 
-        pNx[ i ] = center.x + ( sFactor[ i ] * normalOfCenter.normal_x );
+        pN[ i ].x = center.x + ( sFactor[ i ] * normalOfCenter.nx );
+        pN[ i ].y = center.y + ( sFactor[ i ] * normalOfCenter.ny );
+        pN[ i ].z = center.z + ( sFactor[ i ] * normalOfCenter.nz );
 
-        pNy[ i ] = center.y + ( sFactor[ i ] * normalOfCenter.normal_y );
-
-        pNz[ i ] = center.z + ( sFactor[ i ] * normalOfCenter.normal_z );
-
-        vnix[ i ]      = SearchRingCloud->points[ i ].x - pNx[ i ];
-        vniy[ i ]      = SearchRingCloud->points[ i ].y - pNy[ i ];
-        vniz[ i ]      = SearchRingCloud->points[ i ].z - pNz[ i ];
-        vniLength[ i ] = sqrt( pow( vnix[ i ], 2 ) + pow( vniy[ i ], 2 ) +
-                               pow( vniz[ i ], 2 ) );
+        vni[ i ].x     = SearchRingCloud_[ i ].x - pN[ i ].x;
+        vni[ i ].y     = SearchRingCloud_[ i ].y - pN[ i ].y;
+        vni[ i ].z     = SearchRingCloud_[ i ].z - pN[ i ].z;
+        vniLength[ i ] = sqrt( pow( vni[ i ].x, 2 ) + pow( vni[ i ].y, 2 ) +
+                               pow( vni[ i ].z, 2 ) );
       }
 
       float max    = sFactor[ 0 ];
       int maxindex = 0;
 
       //	find maxindex
-      for( unsigned int j = 0; j < avgSearchRingCloudSize; j++ ) {
+      for( unsigned int j = 0; j < avgSearchRingCloudSize_; j++ ) {
         if( max < sFactor[ j ] ) {
           max      = sFactor[ j ];
           maxindex = j;
@@ -261,12 +229,12 @@ namespace PSA {
       }
 
       //	for finding the cos angle between each Vni vector with respect
-      //to
+      // to
       // reference vector
-      for( size_t i = 0; i < avgSearchRingCloudSize; i++ ) {
-        cosThetaNi[ i ] = ( ( vnix[ i ] * vnix[ maxindex ] ) +
-                            ( vniy[ i ] * vniy[ maxindex ] ) +
-                            ( vniz[ i ] * vniz[ maxindex ] ) ) /
+      for( size_t i = 0; i < avgSearchRingCloudSize_; i++ ) {
+        cosThetaNi[ i ] = ( ( vni[ i ].x * vni[ maxindex ].x ) +
+                            ( vni[ i ].y * vni[ maxindex ].y ) +
+                            ( vni[ i ].z * vni[ maxindex ].z ) ) /
                           ( ( vniLength[ i ] ) * ( vniLength[ maxindex ] ) );
 
         //	due to rounding error the value of cosThetaNi might go higer
@@ -283,12 +251,12 @@ namespace PSA {
 
         // calculating the X and Y co-ordinate of the scaled circle of
         // intersectin points
-        finalPlaneX[ i ] = center.x + vnix[ i ];
-        finalPlaneY[ i ] = center.y + vniy[ i ];
+        finalPlaneX[ i ] = center.x + vni[ i ].x;
+        finalPlaneY[ i ] = center.y + vni[ i ].y;
       }
 
       //	condition for checking if the point is on left or right
-      for( size_t i = 0; i < avgSearchRingCloudSize; i++ ) {
+      for( size_t i = 0; i < avgSearchRingCloudSize_; i++ ) {
         // this calculates the determinant
         value[ i ] = ( ( finalPlaneX[ maxindex ] - center.x ) *
                        ( finalPlaneY[ i ] - center.y ) ) -
@@ -297,9 +265,9 @@ namespace PSA {
       }
 
       //		assigning correct value for final Theta (extending the
-      //anlge
+      // anlge
       // form 0-180 to 0-360)
-      for( size_t i = 0; i < avgSearchRingCloudSize; i++ ) {
+      for( size_t i = 0; i < avgSearchRingCloudSize_; i++ ) {
         if( value[ i ] < 0 ) {
           acosThetaNi[ i ] = 360 - acosThetaNi[ i ];
         } else {
@@ -307,19 +275,19 @@ namespace PSA {
         }
       }
 
-      for( size_t i = 0; i < avgSearchRingCloudSize; i++ ) {
-        structArray[ i ].theta   = acosThetaNi[ i ];
-        structArray[ i ].scaling = sFactor[ i ];
+      for( size_t i = 0; i < avgSearchRingCloudSize_; i++ ) {
+        structArray_[ i ].theta   = acosThetaNi[ i ];
+        structArray_[ i ].scaling = sFactor[ i ];
       }
 
-      std::sort( structArray.begin(), structArray.end(), sort_by_angle );
+      std::sort( structArray_.begin(), structArray_.end(), sort_by_angle );
 
       for( int i = 0; i < 25; i++ ) {
         float min = 10000000;
         float dif;
         int index = -1;
-        for( size_t j = 0; j < avgSearchRingCloudSize; j++ ) {
-          dif = abs( structArray[ j ].theta - i * 15 );
+        for( size_t j = 0; j < avgSearchRingCloudSize_; j++ ) {
+          dif = abs( structArray_[ j ].theta - i * 15 );
           if( dif < min ) {
             min   = dif;
             index = j;
@@ -328,21 +296,21 @@ namespace PSA {
           }
         }
         if( index != -1 ) {
-          descreteArray[ i ].theta   = structArray[ index ].theta;
-          descreteArray[ i ].scaling = structArray[ index ].scaling;
+          descreteArray_[ i ].theta   = structArray_[ index ].theta;
+          descreteArray_[ i ].scaling = structArray_[ index ].scaling;
         }
       }
       for( int i = 0; i < 25; i++ ) {
-        normArray[ i ].scaling =
-          ( ( descreteArray[ i ].scaling ) / sFactor[ maxindex ] );
-        normArray[ i ].theta = descreteArray[ i ].theta;
+        normArray_[ i ].scaling =
+          ( ( descreteArray_[ i ].scaling ) / sFactor[ maxindex ] );
+        normArray_[ i ].theta = descreteArray_[ i ].theta;
       }
     }
   }
-  void pointSignature::PointInPolygonTest( float* TXData, float* TYData,
-                                           std::vector< temp > arrayinput,
-                                           int nbK, int vertices,
-                                           int& pointsInside )
+
+  void pointSignature::PointInPolygonTest(
+    float* TXData, float* TYData, std::vector< angleAndScaling > arrayinput,
+    int nbK, int vertices, int& pointsInside )
   {
     pointsInside  = 0;
     bool isInside = false;
@@ -368,14 +336,13 @@ namespace PSA {
 
   void pointSignature::SigCompare()
   {
-    isPlane    = false;
-    isSphere   = false;
-    isCylinder = false;
+    isPlane_    = false;
+    isSphere_   = false;
+    isCylinder_ = false;
     int vertices;
-    sum  = 0.0;
-    mean = 0.0;
+    double sum = 0.0, mean = 0.0;
     for( int i = 0; i < 25; i++ ) {
-      sum += normArray[ i ].scaling;
+      sum += normArray_[ i ].scaling;
     }
     mean = sum / 25;
 
@@ -390,11 +357,11 @@ namespace PSA {
 
       float numberOfPointsInside = 0.6 * 25;
 
-      PointInPolygonTest( planeTXData, planeTYData, normArray, 25, vertices,
+      PointInPolygonTest( planeTXData, planeTYData, normArray_, 25, vertices,
                           planarPoints );
 
       if( planarPoints >= numberOfPointsInside ) {
-        isPlane = true;
+        isPlane_ = true;
       }
     }
 
@@ -406,11 +373,11 @@ namespace PSA {
 
       float numberOfPointsInside = 0.7 * 25;
 
-      PointInPolygonTest( sphereTXData, sphereTYData, normArray, 25, vertices,
+      PointInPolygonTest( sphereTXData, sphereTYData, normArray_, 25, vertices,
                           spherePoints );
 
       if( spherePoints >= numberOfPointsInside ) {
-        isSphere = true;
+        isSphere_ = true;
       }
 
     }
@@ -429,105 +396,88 @@ namespace PSA {
 
       float numberOfPointsInside = 0.78 * 25;
 
-      PointInPolygonTest( cylinderTXData, cylinderTYData, normArray, 25,
+      PointInPolygonTest( cylinderTXData, cylinderTYData, normArray_, 25,
                           vertices, cylinderPoints );
 
       if( cylinderPoints >= numberOfPointsInside ) {
-        isCylinder = true;
+        isCylinder_ = true;
       }
     }
   }
 
-  void pointSignature::setShape( unsigned int shapeSelect )
+  void pointSignature::setShape( Shape const& shapeSelect )
   {
-    shape = shapeSelect;
+    shape_ = shapeSelect;
   }
 
   void pointSignature::checkShape()
   {
-    size        = 0;
-    totalpoints = cloud->points.size();
-    std::vector< int > pointIdxRadSearch;
-    std::vector< float > pointRadSqDistance;
-    pcl::KdTreeFLANN< pcl::PointXYZ > kdtree;
-    kdtree.setInputCloud( cloud );
-    calculateNormals();
-    for( int i = 0; i < totalpoints; i++ ) {
-      center_point = i;
-      calculateSearchRing();
-      if( avgSearchRingCloudSize > 10 ) {
-        computeSignature();
-        SigCompare();
+    size_t size  = 0;
+    totalpoints_ = inputCloud_.size();
+    std::vector< size_t > pointIdxRadSearch;
+    std::vector< double > pointRadSqDistance;
+    PCF::KDtreeFlann kdtree;
+    kdtree.setInputCloud( inputCloud_ );
+    this->computeNormals();
+    for( int i = 0; i < totalpoints_; i++ ) {
+      this->calculateSearchRing( i );
+      if( avgSearchRingCloudSize_ > 10 ) {
+        this->computeSignature( i );
+        this->SigCompare();
 
-        if( ( shape == pcl::SACMODEL_CYLINDER && isCylinder == true ||
-              shape == pcl::SACMODEL_CONE && isCylinder == true ) &&
-            ( kdtree.radiusSearch( cloud->points[ i ], radius,
-                                   pointIdxRadSearch,
+        if( ( shape_ == Shape::CYLINDER && isCylinder_ == true ||
+              shape_ == Shape::CONE && isCylinder_ == true ) &&
+            ( kdtree.radiusSearch( inputCloud_[ i ], radius_, pointIdxRadSearch,
                                    pointRadSqDistance ) > 10 ) ) {
           for( size_t j = 0; j < pointIdxRadSearch.size(); j++ )
-            loopingCloud->push_back( cloud->points[ pointIdxRadSearch[ j ] ] );
+            loopingCloud_.push_back( inputCloud_[ pointIdxRadSearch[ j ] ] );
 
         }
 
-        else if( shape == pcl::SACMODEL_SPHERE && isSphere == true &&
-                 ( kdtree.radiusSearch( cloud->points[ i ], radius,
+        else if( shape_ == Shape::SPHERE && isSphere_ == true &&
+                 ( kdtree.radiusSearch( inputCloud_[ i ], radius_,
                                         pointIdxRadSearch,
                                         pointRadSqDistance ) > 10 ) ) {
           for( size_t j = 0; j < pointIdxRadSearch.size(); j++ )
-            loopingCloud->push_back( cloud->points[ pointIdxRadSearch[ j ] ] );
+            loopingCloud_.push_back( inputCloud_[ pointIdxRadSearch[ j ] ] );
 
         }
 
-        else if( shape == pcl::SACMODEL_PLANE && isPlane == true &&
-                 ( kdtree.radiusSearch( cloud->points[ i ], radius,
+        else if( shape_ == Shape::PLANE && isPlane_ == true &&
+                 ( kdtree.radiusSearch( inputCloud_[ i ], radius_,
                                         pointIdxRadSearch,
                                         pointRadSqDistance ) > 10 ) ) {
           for( size_t j = 0; j < pointIdxRadSearch.size(); j++ )
-            planeCloud->push_back(
-              iterationCloud->points[ pointIdxRadSearch[ j ] ] );
+            planeCloud_.push_back( iterationCloud_[ pointIdxRadSearch[ j ] ] );
         }
       }
     }
 
-    pcl::VoxelGrid< pcl::PointXYZ > sor;
-    if( planeCloud->points.size() != 0 ) {
-      planeCloud->height = 1;
-      planeCloud->points.resize( planeCloud->width );
-      planeCloud->points.shrink_to_fit();
+    PCF::Filter3D sor;
+    if( planeCloud_.size() != 0 ) {
+      planeCloud_.shrink_to_fit();
 
-      sor.setInputCloud( planeCloud );
-      sor.setLeafSize( 0.08 * margin, 0.08 * margin, 0.08 * margin );
-      sor.filter( *filteredPlaneCloud );
+      sor.voxelFilter( planeCloud_, 0.08f * margin_, filteredPlaneCloud_ );
     }
 
-    if( loopingCloud->points.size() != 0 ) {
-      filterCloud->height   = 1;
-      filterCloud->is_dense = true;
-      filterCloud->points.resize( loopingCloud->width * loopingCloud->height );
-      pcl::copyPointCloud( *loopingCloud, *filterCloud );
+    if( loopingCloud_.size() != 0 ) {
 
-      sor.setInputCloud( filterCloud );
-      sor.setLeafSize( 0.08 * margin, 0.08 * margin, 0.08 * margin );
-      sor.filter( *outputCloud );
+      sor.voxelFilter( loopingCloud_, 0.08f * margin_, outputCloud_ );
     }
 
-    if( shape == pcl::SACMODEL_CYLINDER || shape == pcl::SACMODEL_SPHERE ) {
-      size = outputCloud->points.size();
+    if( shape_ == Shape::CYLINDER || shape_ == Shape::SPHERE ) {
+      size = outputCloud_.size();
       printf( "Cylinder Or Sphere, size = %d\n", size );
     }
 
-    else if( ( outputCloud->points.size() >= 0.60 * totalpoints ) &&
-             ( shape == pcl::SACMODEL_CONE ) ) {
-      size = ( outputCloud->points.size() +
-               0.35 * filteredPlaneCloud->points.size() );
+    else if( ( outputCloud_.size() >= 0.60 * totalpoints_ ) &&
+             ( shape_ == Shape::CONE ) ) {
+      size = ( outputCloud_.size() + 0.35 * filteredPlaneCloud_.size() );
       printf( "Cone, size = %d\n", size );
     }
 
     else {
-      PCF::pointCloud falseCloud;
-      size = falseCloud.points.size();
+      size = 0;
     }
   }
-
-  int pointSignature::getShape() { return ( size ); }
 } // namespace PSA
