@@ -4,23 +4,17 @@ inline double round(double value) {
   return value < 0 ? -std::floor(0.5 - value) : std::floor(0.5 + value);
 }
 cleanCloud::cleanCloud() {
-  cloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  voxelCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  mlsCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  cleanSample =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  newCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  tree = pcl::search::KdTree<pcl::PointXYZ>::Ptr(
+  cloud = PCF::pointCloud(new PCF::pointCloud);
+  voxelCloud = PCF::pointCloud(new PCF::pointCloud);
+  mlsCloud = PCF::pointCloud(new PCF::pointCloud);
+  cleanSample = PCF::pointCloud(new PCF::pointCloud);
+  newCloud = PCF::pointCloud(new PCF::pointCloud);
+  tree = pcl::search::KdTree<pcl::PointXYZ>(
       new pcl::search::KdTree<pcl::PointXYZ>);
-  Sample =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  Sample = PCF::pointCloud(new PCF::pointCloud);
 }
 
-float cleanCloud::calcMean(pcl::PointCloud<pcl::PointXYZ>::Ptr input) {
+float cleanCloud::calcMean(PCF::pointCloud input) {
   float meanDist = 0.0, totalDistance = 0.0, variance = 0.0,
         standardDeviation = 0.0;
   std::vector<float> EuclidianDistance;
@@ -71,8 +65,7 @@ float cleanCloud::calcMean(pcl::PointCloud<pcl::PointXYZ>::Ptr input) {
   return (meanDist + standardDeviation);
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr
-cleanCloud::removeNoise(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
+PCF::pointCloud cleanCloud::removeNoise(PCF::pointCloud inputCloud) {
   std::cout << "Before filtering Cloud size: " << inputCloud->points.size()
             << std::endl;
   pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> octree(14);

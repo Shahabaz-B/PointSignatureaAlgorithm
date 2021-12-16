@@ -1,31 +1,21 @@
 #include <pointSignatureAlgorithm/OptimizedPS.hpp>
 
 pointSignature::pointSignature() {
-  cloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  cloud = PCF::pointCloud(new PCF::pointCloud);
   avgSearchRingCloudSize = 0;
-  loopingCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  planeCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  filteredPlaneCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  filterCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  outputCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  SearchRingCloud =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  Normalcloud =
-      pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
+  loopingCloud = PCF::pointCloud(new PCF::pointCloud);
+  planeCloud = PCF::pointCloud(new PCF::pointCloud);
+  filteredPlaneCloud = PCF::pointCloud(new PCF::pointCloud);
+  filterCloud = PCF::pointCloud(new PCF::pointCloud);
+  outputCloud = PCF::pointCloud(new PCF::pointCloud);
+  SearchRingCloud = PCF::pointCloud(new PCF::pointCloud);
+  Normalcloud = pcl::PointCloud<pcl::Normal>(new pcl::PointCloud<pcl::Normal>);
   normArray.resize(25);
   descreteArray.resize(25);
   counter = 0;
 }
 
-void pointSignature::setCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input) {
-  cloud = input;
-}
+void pointSignature::setCloud(PCF::pointCloud input) { cloud = input; }
 
 void pointSignature::setRadius(float _radius) { radius = _radius; }
 
@@ -38,7 +28,7 @@ void pointSignature::setCenter(int _center) { center_point = _center; }
 
 void pointSignature::setMargin(float _margin) { margin = _margin; }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr pointSignature::getCloud() { return cloud; }
+PCF::pointCloud pointSignature::getCloud() { return cloud; }
 
 float pointSignature::getRadius() { return radius; }
 
@@ -133,15 +123,13 @@ void pointSignature::calculateSearchRing() {
   }
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr pointSignature::getSearchRing() {
-  return SearchRingCloud;
-}
+PCF::pointCloud pointSignature::getSearchRing() { return SearchRingCloud; }
 
 void pointSignature::calculateNormals() {
   pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
   ne.setInputCloud(cloud);
 
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
+  pcl::search::KdTree<pcl::PointXYZ> tree(
       new pcl::search::KdTree<pcl::PointXYZ>());
   // To save the Normals of point cloud
 
@@ -290,7 +278,7 @@ void pointSignature::computeSignature() {
     }
 
     //		assigning correct value for final Theta (extending the anlge
-    //form 0-180 to 0-360)
+    // form 0-180 to 0-360)
     for (size_t i = 0; i < avgSearchRingCloudSize; i++) {
       if (value[i] < 0) {
         acosThetaNi[i] = 360 - acosThetaNi[i];
@@ -503,7 +491,7 @@ void pointSignature::checkShape() {
   }
 
   else {
-    pcl::PointCloud<pcl::PointXYZ> falseCloud;
+    PCF::pointCloud falseCloud;
     size = falseCloud.points.size();
   }
 }

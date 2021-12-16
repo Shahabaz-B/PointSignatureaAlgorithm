@@ -6,9 +6,8 @@ inline double round(double value) {
   return value < 0 ? -std::floor(0.5 - value) : std::floor(0.5 + value);
 }
 int main(int argc, char **argv) {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr extractedCloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
+  PCF::pointCloud cloud(new PCF::pointCloud);
+  PCF::pointCloud extractedCloud(new PCF::pointCloud);
   pcl::visualization::PCLVisualizer *visualizer(
       new pcl::visualization::PCLVisualizer);
 
@@ -24,7 +23,7 @@ int main(int argc, char **argv) {
   meanDistance md1;
   md1.calcMean(cloud, 2);
 
-  pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr model_p(
+  pcl::SampleConsensusModelPlane<pcl::PointXYZ> model_p(
       new pcl::SampleConsensusModelPlane<pcl::PointXYZ>(cloud));
   std::vector<int> inliers;
   pcl::RandomSampleConsensus<pcl::PointXYZ> ransac(model_p);
@@ -32,7 +31,7 @@ int main(int argc, char **argv) {
   ransac.computeModel();
   ransac.getInliers(inliers);
 
-  pcl::PointCloud<PointT>::Ptr cloud_plane(new pcl::PointCloud<PointT>());
+  pcl::PointCloud<PointT> cloud_plane(new pcl::PointCloud<PointT>());
 
   // Write the planar inliers to disk
   pcl::copyPointCloud<PointT>(*cloud, inliers, *extractedCloud);
@@ -55,8 +54,7 @@ int main(int argc, char **argv) {
   projectionTransform.block<3, 1>(0, 3) =
       -1.f * (projectionTransform.block<3, 3>(0, 0) * pcaCentroid.head<3>());
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPointsProjected(
-      new pcl::PointCloud<pcl::PointXYZ>);
+  PCF::pointCloud cloudPointsProjected(new PCF::pointCloud);
   pcl::transformPointCloud(*extractedCloud, *cloudPointsProjected,
                            projectionTransform);
 
@@ -126,8 +124,7 @@ int main(int argc, char **argv) {
   std::sort(ptIndex.begin(), ptIndex.end());
   ptIndex.erase(std::unique(ptIndex.begin(), ptIndex.end()), ptIndex.end());
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr SearchRingCloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
+  PCF::pointCloud SearchRingCloud(new PCF::pointCloud);
   SearchRingCloud->width = count;
   SearchRingCloud->height = 1;
   SearchRingCloud->points.resize(SearchRingCloud->width);

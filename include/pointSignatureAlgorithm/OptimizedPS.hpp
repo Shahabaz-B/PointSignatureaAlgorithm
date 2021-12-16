@@ -26,10 +26,10 @@ public:
   // Default Constructor
   pointSignature();
 
-  void setCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input);
+  void setCloud(PCF::pointCloud input);
 
   // To ouput the cloud form the class
-  pcl::PointCloud<pcl::PointXYZ>::Ptr getCloud();
+  PCF::pointCloud getCloud();
 
   // to set the center of the searching ring, mostly used by "Clustering class"
   // void setCenter(int _center);
@@ -50,7 +50,7 @@ public:
   // calculates the seraching ring for the given center point.
   void calculateSearchRing();
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr getSearchRing();
+  PCF::pointCloud getSearchRing();
 
   void calculateNormals();
 
@@ -82,18 +82,18 @@ private:
   float margin, radius;
 
   // Input clouds
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloudforAvg;
+  PCF::pointCloud cloud;
+  PCF::pointCloud inputCloudforAvg;
 
   int size;
 
   int totalpoints;
   float volSphereRad;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr iterationCloud, loopingCloud, filterCloud,
-      outputCloud, planeCloud, filteredPlaneCloud;
+  PCF::pointCloud iterationCloud, loopingCloud, filterCloud, outputCloud,
+      planeCloud, filteredPlaneCloud;
 
-  pcl::PointCloud<pcl::Normal>::Ptr Normalcloud;
+  pcl::PointCloud<pcl::Normal> Normalcloud;
 
   /*
   pcl::SACMODEL_PLANE    = 0
@@ -122,7 +122,7 @@ private:
       acosThetaNi, finalPlaneX, finalPlaneY, value;
 
   // for saving new point cloud of searched ring and average searching ring
-  pcl::PointCloud<pcl::PointXYZ>::Ptr SearchRingCloud;
+  PCF::pointCloud SearchRingCloud;
 
   /* required in kdtree calculation to store index of points which
   satisfies the given condition and to store the squared distance of the same
