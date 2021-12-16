@@ -11,22 +11,25 @@ Upsampling and smoothing, Downsampling and smoothing.
 #include <pointCloudFilters/PointDefinition.hpp>
 #include <string>
 
-class cleanCloud {
-private:
-  PCF::pointCloud cloud, voxelCloud, mlsCloud, cleanSample, newCloud, Sample;
-  pcl::search::KdTree<pcl::PointXYZ> tree;
+namespace PSA {
 
-  std::vector<int> pointIdxRadiusSearch;
-  std::vector<float> pointRadiusSquaredDistance;
+  class cleanCloud
+  {
+  private:
+    PCF::pointCloud cloud, voxelCloud, mlsCloud, cleanSample, newCloud, Sample;
+    pcl::search::KdTree< pcl::PointXYZ > tree;
 
-  float calcMean(PCF::pointCloud input);
+    std::vector< int > pointIdxRadiusSearch;
+    std::vector< float > pointRadiusSquaredDistance;
 
-public:
-  /* Default constructor to initialize the variables and
-  set K = 7 for optimal noise removal*/
-  cleanCloud();
+    float calcMean( PCF::pointCloud input );
 
-  // Removes the noise, does Up/Down sampling for  the given cloud
-  PCF::pointCloud removeNoise(PCF::pointCloud inputCloud);
-};
-#endif
+  public:
+    /* Default constructor to initialize the variables and
+    set K = 7 for optimal noise removal*/
+    cleanCloud();
+
+    // Removes the noise, does Up/Down sampling for  the given cloud
+    PCF::pointCloud removeNoise( PCF::pointCloud inputCloud );
+  };
+} // namespace PSA

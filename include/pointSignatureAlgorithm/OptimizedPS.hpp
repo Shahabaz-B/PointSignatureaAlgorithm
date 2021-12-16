@@ -10,127 +10,127 @@
 
 #define PI 3.14159265
 
-struct temp {
-  float theta;
-  float scaling;
-};
+namespace {
+  struct temp
+  {
+    float theta;
+    float scaling;
+  };
+} // namespace
 
-/*
-Used to sort the struct only on the basis of angle
-which will sort the signed distance with it
-*/
+namespace PSA {
+  class pointSignature
+  {
 
-class pointSignature {
+  public:
+    // Default Constructor
+    pointSignature();
 
-public:
-  // Default Constructor
-  pointSignature();
+    void setCloud( PCF::pointCloud input );
 
-  void setCloud(PCF::pointCloud input);
+    // To ouput the cloud form the class
+    PCF::pointCloud getCloud();
 
-  // To ouput the cloud form the class
-  PCF::pointCloud getCloud();
+    // to set the center of the searching ring, mostly used by "Clustering
+    // class" void setCenter(int _center);
 
-  // to set the center of the searching ring, mostly used by "Clustering class"
-  // void setCenter(int _center);
+    void setCenter( int _center );
 
-  void setCenter(int _center);
+    int getCenter();
 
-  int getCenter();
+    // set the radius / margin of seraching ring/sphere manually
+    void setRadius( float _radius );
 
-  // set the radius / margin of seraching ring/sphere manually
-  void setRadius(float _radius);
+    float getRadius();
 
-  float getRadius();
+    void setMargin( float _margin );
 
-  void setMargin(float _margin);
+    float getMargin( void );
 
-  float getMargin(void);
+    // calculates the seraching ring for the given center point.
+    void calculateSearchRing();
 
-  // calculates the seraching ring for the given center point.
-  void calculateSearchRing();
+    PCF::pointCloud getSearchRing();
 
-  PCF::pointCloud getSearchRing();
+    void calculateNormals();
 
-  void calculateNormals();
+    // Computes the siganture of the surface and saves it in 15 Degrees of
+    // interval
+    void computeSignature();
 
-  // Computes the siganture of the surface and saves it in 15 Degrees of
-  // interval
-  void computeSignature();
+    // Sets flag for detected object viz. Plane, Sphere, Cylinder
+    void SigCompare();
 
-  // Sets flag for detected object viz. Plane, Sphere, Cylinder
-  void SigCompare();
+    void setShape( unsigned int shapeSelect );
 
-  void setShape(unsigned int shapeSelect);
+    // checks the shape
+    void checkShape();
 
-  // checks the shape
-  void checkShape();
+    // Returns the size of detected object which is use in PS_RANSAC later
+    int getShape();
 
-  // Returns the size of detected object which is use in PS_RANSAC later
-  int getShape();
+  private:
+    // Used to store total number of points present in PC (PointCloud)
+    float totalcount;
 
-private:
-  // Used to store total number of points present in PC (PointCloud)
-  float totalcount;
+    // point of interest in PS
+    int center_point, counter;
 
-  // point of interest in PS
-  int center_point, counter;
+    pcl::PointXYZ center_pnt;
 
-  pcl::PointXYZ center_pnt;
+    // Radius and margin fro the seraching sphere
+    float margin, radius;
 
-  // Radius and margin fro the seraching sphere
-  float margin, radius;
+    // Input clouds
+    PCF::pointCloud cloud;
+    PCF::pointCloud inputCloudforAvg;
 
-  // Input clouds
-  PCF::pointCloud cloud;
-  PCF::pointCloud inputCloudforAvg;
+    int size;
 
-  int size;
+    int totalpoints;
+    float volSphereRad;
 
-  int totalpoints;
-  float volSphereRad;
-
-  PCF::pointCloud iterationCloud, loopingCloud, filterCloud, outputCloud,
+    PCF::pointCloud iterationCloud, loopingCloud, filterCloud, outputCloud,
       planeCloud, filteredPlaneCloud;
 
-  pcl::PointCloud<pcl::Normal> Normalcloud;
+    pcl::PointCloud< pcl::Normal > Normalcloud;
 
-  /*
-  pcl::SACMODEL_PLANE    = 0
-  pcl::SACMODEL_SPHERE   = 4
-  pcl::SACMODEL_CYLINDER = 5
-  pcl::SACMODEL_CONE     = 6
-  */
-  int shape;
+    /*
+    pcl::SACMODEL_PLANE    = 0
+    pcl::SACMODEL_SPHERE   = 4
+    pcl::SACMODEL_CYLINDER = 5
+    pcl::SACMODEL_CONE     = 6
+    */
+    int shape;
 
-  float mean, variance, standardDeviation, sum, upperLimit, lowerLimit,
+    float mean, variance, standardDeviation, sum, upperLimit, lowerLimit,
       swap_var;
 
-  // Flag for the counter True if inside, false if outside. Default = false
-  bool isPlane, isSphere, isCylinder;
+    // Flag for the counter True if inside, false if outside. Default = false
+    bool isPlane, isSphere, isCylinder;
 
-  inline void PointInPolygonTest(float *TXData, float *TYData,
-                                 std::vector<temp> arrayinput, int nbK,
-                                 int vertices, int &pointsInside);
+    inline void PointInPolygonTest( float* TXData, float* TYData,
+                                    std::vector< temp > arrayinput, int nbK,
+                                    int vertices, int& pointsInside );
 
-  // Varable of type "Strct temp"
-  std::vector<temp> normArray, structArray, descreteArray;
+    // Varable of type "Strct temp"
+    std::vector< temp > normArray, structArray, descreteArray;
 
-  // Refer Thesis documetation to understand meaning of these varaibles
-  std::vector<float> vcix, vciy, vciz, vciLength, vciDotProd, vciLengthProd,
+    // Refer Thesis documetation to understand meaning of these varaibles
+    std::vector< float > vcix, vciy, vciz, vciLength, vciDotProd, vciLengthProd,
       cosTheta, sFactor, pNx, pNy, pNz, vnix, vniy, vniz, vniLength, cosThetaNi,
       acosThetaNi, finalPlaneX, finalPlaneY, value;
 
-  // for saving new point cloud of searched ring and average searching ring
-  PCF::pointCloud SearchRingCloud;
+    // for saving new point cloud of searched ring and average searching ring
+    PCF::pointCloud SearchRingCloud;
 
-  /* required in kdtree calculation to store index of points which
-  satisfies the given condition and to store the squared distance of the same
-  points*/
-  std::vector<int> pointIdxRadiusSearch;
-  std::vector<float> pointRadiusSquaredDistance;
+    /* required in kdtree calculation to store index of points which
+    satisfies the given condition and to store the squared distance of the same
+    points*/
+    std::vector< int > pointIdxRadiusSearch;
+    std::vector< float > pointRadiusSquaredDistance;
 
-  // saves the number of points present in the avgSearchiRingCloud
-  size_t avgSearchRingCloudSize;
-};
-#endif
+    // saves the number of points present in the avgSearchiRingCloud
+    size_t avgSearchRingCloudSize;
+  };
+} // namespace PSA
