@@ -1,11 +1,11 @@
 #pragma once
-#include "pointCloudFilters/PointDefinition.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <pointCloudFilters/PointCloudFilters.hpp>
+#include <pointCloudFilters/PointDefinition.hpp>
 #include <string>
 #include <time.h>
 #include <vector>
@@ -14,16 +14,13 @@
 // 0.2617993878 = (15*2*PI)/360), standard forumula for arc length
 #define ARC_LENGTH_CONST 0.2617993878
 
-namespace {
+namespace PSA {
   struct angleAndScaling
   {
     float theta;
     float scaling;
   };
 
-} // namespace
-
-namespace PSA {
   enum class Shape
   {
 

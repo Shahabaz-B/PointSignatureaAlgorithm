@@ -467,13 +467,13 @@ namespace PSA {
 
     if( shape_ == Shape::CYLINDER || shape_ == Shape::SPHERE ) {
       size = outputCloud_.size();
-      printf( "Cylinder Or Sphere, size = %d\n", size );
+      std::cout << "Cylinder Or Sphere, size = " << size << std::endl;
     }
 
     else if( ( outputCloud_.size() >= 0.60 * totalpoints_ ) &&
              ( shape_ == Shape::CONE ) ) {
       size = ( outputCloud_.size() + 0.35 * filteredPlaneCloud_.size() );
-      printf( "Cone, size = %d\n", size );
+      std::cout << "Cone, size = " << size << std::endl;
     }
 
     else {

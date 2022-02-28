@@ -1,12 +1,13 @@
-#include "pointCloudFilters/PointCloudFilters.hpp"
 #include <pointCloudFilters/FileHandler.hpp>
 #include <pointCloudFilters/KdtreeFlann.hpp>
+#include <pointCloudFilters/PointCloudFilters.hpp>
 #include <pointSignatureAlgorithm/OptimizedPS.hpp>
 
 inline double round( double value )
 {
   return value < 0 ? -std::floor( 0.5 - value ) : std::floor( 0.5 + value );
 }
+// int main( int argc, const char** argv ) { return 0; }
 int main( int argc, char** argv )
 {
   PCF::FileHandler fh;
@@ -47,9 +48,10 @@ int main( int argc, char** argv )
   eigenVectorsPCA.col( 2 ) =
     eigenVectorsPCA.col( 0 ).cross( eigenVectorsPCA.col( 1 ) );
 
-  // Transform the original cloud to the origin where the principal components
-  // correspond to the axes.
-  Eigen::Matrix4f projectionTransform( Eigen::Matrix4f::Identity() );
+  // Transform the original cloud to the origin where the principal
+  components
+    // correspond to the axes.
+    Eigen::Matrix4f projectionTransform( Eigen::Matrix4f::Identity() );
   projectionTransform.block< 3, 3 >( 0, 0 ) = eigenVectorsPCA.transpose();
   projectionTransform.block< 3, 1 >( 0, 3 ) =
     -1.f *
@@ -131,10 +133,11 @@ int main( int argc, char** argv )
   SearchRingCloud->points.resize( SearchRingCloud->width );
 
   for( size_t i = 0; i < SearchRingCloud->points.size(); i++ ) {
-    // adding values for new points from the old point cloud which satisfy the
-    // condition
-    SearchRingCloud->points[ i ].x =
-      cloudPointsProjected->points[ ptIndex[ i ] ].x;
+    // adding values for new points from the old point cloud which satisfy
+    the
+      // condition
+      SearchRingCloud->points[ i ]
+        .x = cloudPointsProjected->points[ ptIndex[ i ] ].x;
     SearchRingCloud->points[ i ].y =
       cloudPointsProjected->points[ ptIndex[ i ] ].y;
     SearchRingCloud->points[ i ].z =
@@ -206,22 +209,24 @@ int main( int argc, char** argv )
         ( vniz[ i ] * vniz[ maxindex ] ) ) /
       ( ( vniLength[ i ] ) * ( vniLength[ maxindex ] ) );
 
-    //	due to rounding error the value of cosThetaNi might go higer than 1 or
-    // lower than -1 so we need this inequality for getting correct value of
-    // angle
-    if( ( ( ( cosThetaNi[ i ] - 1 <= 0.00001 ) &&
-            ( cosThetaNi[ i ] - 1 >= 0.0 ) ) ||
-          ( ( cosThetaNi[ i ] + 1 <= 0.00001 ) &&
-            ( cosThetaNi[ i ] + 1 >= 0.0 ) ) ) ) {
+    //	due to rounding error the value of cosThetaNi might go higer
+    than 1 or
+      // lower than -1 so we need this inequality for getting correct value of
+      // angle
+      if( ( ( ( cosThetaNi[ i ] - 1 <= 0.00001 ) &&
+              ( cosThetaNi[ i ] - 1 >= 0.0 ) ) ||
+            ( ( cosThetaNi[ i ] + 1 <= 0.00001 ) &&
+              ( cosThetaNi[ i ] + 1 >= 0.0 ) ) ) )
+    {
       acosThetaNi[ i ] = 0;
-    } else {
-      acosThetaNi[ i ] = ( ( acos( cosThetaNi[ i ] ) ) * 180 ) / PI;
     }
+    else { acosThetaNi[ i ] = ( ( acos( cosThetaNi[ i ] ) ) * 180 ) / PI; }
 
-    // calculating the X and Y co-ordinate of the scaled circle of intersectin
-    // points
-    finalPlaneX[ i ] = center.x + vnix[ i ];
-    finalPlaneY[ i ] = center.y + vniy[ i ];
+    // calculating the X and Y co-ordinate of the scaled circle of
+    intersectin
+      // points
+      finalPlaneX[ i ] = center.x + vnix[ i ];
+    finalPlaneY[ i ]   = center.y + vniy[ i ];
   }
 
   //	condition for checking if the point is on left or right
