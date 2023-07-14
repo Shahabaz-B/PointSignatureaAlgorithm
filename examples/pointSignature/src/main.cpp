@@ -11,36 +11,15 @@ int main( int argc, char** argv )
   PCF::pointCloud smoothCloud;
 
   PCF::Filter3D cc;
-  cc.MakeSmoothPointCloud( 30, 0.8 * cc.getMean( 4, cloud ), cloud,
-                           smoothCloud );
+  auto meanVal = cc.getMean( 100, cloud );
+  std::cout << meanVal << std::endl;
+  cc.MakeSmoothPointCloud( 200, 0.8 * meanVal, cloud, smoothCloud );
 
-  ///\\\=====================================================================================
+  PSA::pointSignature psa( smoothCloud );
+  psa.setRadius( 3 * meanVal );
+  psa.setMargin( 0.8 * meanVal );
+  psa.setShape( PSA::Shape::SPHERE );
+  psa.checkShape();
 
-  // Eigen::Vector4f pcaCentroid;
-  // pcl::compute3DCentroid( *extractedCloud, pcaCentroid );
-  // Eigen::Matrix3f covariance;
-  // computeCovarianceMatrixNormalized( *extractedCloud, pcaCentroid, covariance
-  // ); Eigen::SelfAdjointEigenSolver< Eigen::Matrix3f > eigen_solver(
-  //   covariance, Eigen::ComputeEigenvectors );
-  // Eigen::Matrix3f eigenVectorsPCA = eigen_solver.eigenvectors();
-  // eigenVectorsPCA.col( 2 ) =
-  //   eigenVectorsPCA.col( 0 ).cross( eigenVectorsPCA.col( 1 ) );
-
-  // // Transform the original cloud to the origin where the principal
-  // components
-  //   // correspond to the axes.
-  //   Eigen::Matrix4f projectionTransform( Eigen::Matrix4f::Identity() );
-  // projectionTransform.block< 3, 3 >( 0, 0 ) = eigenVectorsPCA.transpose();
-  // projectionTransform.block< 3, 1 >( 0, 3 ) =
-  //   -1.f *
-  //   ( projectionTransform.block< 3, 3 >( 0, 0 ) * pcaCentroid.head< 3 >() );
-
-  // PCF::pointCloud cloudPointsProjected( new PCF::pointCloud );
-  // pcl::transformPointCloud( *extractedCloud, *cloudPointsProjected,
-  //                           projectionTransform );
-
-  // pcl::io::savePCDFileBinaryCompressed( "file.pcd", *cloudPointsProjected );
-
-  ///\\\====================================================================================
   return 0;
 }
